@@ -8,6 +8,9 @@ cmake_minimum_required(VERSION 3.20.0)
 
 file(TO_CMAKE_PATH $ENV{ZEPHYR_BASE} CMAKE_STYLE_ZEPHYR)
 
+
+set(SHIELD nrf5340_audio_display)
+
 if (CONFIG_AUDIO_DFU EQUAL 1)
     list(APPEND mcuboot_OVERLAY_CONFIG
         "${CMAKE_CURRENT_LIST_DIR}/dfu/conf/overlay-mcuboot.conf"
@@ -80,7 +83,6 @@ add_subdirectory(src/bluetooth)
 add_subdirectory(src/drivers)
 add_subdirectory(src/modules)
 add_subdirectory(src/utils)
-
 ## Cirrus Logic
 if (CONFIG_HW_CODEC_CIRRUS_LOGIC)
     if (ZEPHYR_CIRRUS_LOGIC_MODULE_DIR)
