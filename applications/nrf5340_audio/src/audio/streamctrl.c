@@ -199,7 +199,7 @@ void streamctrl_encoded_data_send(void const *const data, size_t size, uint8_t n
 	int ret;
 	static int prev_ret;
 
-	struct encoded_audio enc_audio = { .data = data, .size = size, .num_ch = num_ch };
+	struct encoded_audio enc_audio = {.data = data, .size = size, .num_ch = num_ch};
 
 	if (strm_state == STATE_STREAMING) {
 		ret = le_audio_send(enc_audio);
@@ -443,27 +443,24 @@ int streamctrl_start(void)
 	ret = data_fifo_init(&ble_fifo_rx);
 	ERR_CHK_MSG(ret, "Failed to set up ble_rx FIFO");
 
-	button_msg_sub_thread_id =
-		k_thread_create(&button_msg_sub_thread_data, button_msg_sub_thread_stack,
-				CONFIG_BUTTON_MSG_SUB_STACK_SIZE,
-				(k_thread_entry_t)button_msg_sub_thread, NULL, NULL, NULL,
-				K_PRIO_PREEMPT(CONFIG_BUTTON_MSG_SUB_THREAD_PRIO), 0, K_NO_WAIT);
+	button_msg_sub_thread_id = k_thread_create(
+		&button_msg_sub_thread_data, button_msg_sub_thread_stack,
+		CONFIG_BUTTON_MSG_SUB_STACK_SIZE, (k_thread_entry_t)button_msg_sub_thread, NULL,
+		NULL, NULL, K_PRIO_PREEMPT(CONFIG_BUTTON_MSG_SUB_THREAD_PRIO), 0, K_NO_WAIT);
 	ret = k_thread_name_set(button_msg_sub_thread_id, "BUTTON_MSG_SUB");
 	ERR_CHK(ret);
 
-	le_audio_msg_sub_thread_id =
-		k_thread_create(&le_audio_msg_sub_thread_data, le_audio_msg_sub_thread_stack,
-				CONFIG_LE_AUDIO_MSG_SUB_STACK_SIZE,
-				(k_thread_entry_t)le_audio_msg_sub_thread, NULL, NULL, NULL,
-				K_PRIO_PREEMPT(CONFIG_LE_AUDIO_MSG_SUB_THREAD_PRIO), 0, K_NO_WAIT);
+	le_audio_msg_sub_thread_id = k_thread_create(
+		&le_audio_msg_sub_thread_data, le_audio_msg_sub_thread_stack,
+		CONFIG_LE_AUDIO_MSG_SUB_STACK_SIZE, (k_thread_entry_t)le_audio_msg_sub_thread, NULL,
+		NULL, NULL, K_PRIO_PREEMPT(CONFIG_LE_AUDIO_MSG_SUB_THREAD_PRIO), 0, K_NO_WAIT);
 	ret = k_thread_name_set(le_audio_msg_sub_thread_id, "LE_AUDIO_MSG_SUB");
 	ERR_CHK(ret);
 
-	audio_datapath_thread_id =
-		k_thread_create(&audio_datapath_thread_data, audio_datapath_thread_stack,
-				CONFIG_AUDIO_DATAPATH_STACK_SIZE,
-				(k_thread_entry_t)audio_datapath_thread, NULL, NULL, NULL,
-				K_PRIO_PREEMPT(CONFIG_AUDIO_DATAPATH_THREAD_PRIO), 0, K_NO_WAIT);
+	audio_datapath_thread_id = k_thread_create(
+		&audio_datapath_thread_data, audio_datapath_thread_stack,
+		CONFIG_AUDIO_DATAPATH_STACK_SIZE, (k_thread_entry_t)audio_datapath_thread, NULL,
+		NULL, NULL, K_PRIO_PREEMPT(CONFIG_AUDIO_DATAPATH_THREAD_PRIO), 0, K_NO_WAIT);
 	ret = k_thread_name_set(audio_datapath_thread_id, "AUDIO DATAPATH");
 	ERR_CHK(ret);
 

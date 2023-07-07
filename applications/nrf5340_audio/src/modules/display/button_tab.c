@@ -3,7 +3,6 @@
  *
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
-#include "display.h"
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/display.h>
@@ -148,9 +147,12 @@ void button_tab_create(lv_obj_t *current_screen)
 #if (CONFIG_TRANSPORT_CIS)
 	button_create(current_screen, "Test Tone", LV_ALIGN_TOP_LEFT, btn4_button_event_cb);
 #endif
-	button_create(current_screen, "Play/Pause", LV_ALIGN_LEFT_MID, play_pause_button_event_cb);
-	button_create(current_screen, "Vol+", LV_ALIGN_TOP_RIGHT, volume_up_button_event_cb);
-	button_create(current_screen, "Vol-", LV_ALIGN_BOTTOM_RIGHT, volume_down_button_event_cb);
-	button_create(current_screen, "Mute", LV_ALIGN_BOTTOM_LEFT, btn5_button_event_cb);
+	button_create(current_screen, LV_SYMBOL_PLAY, LV_ALIGN_LEFT_MID,
+		      play_pause_button_event_cb);
+	button_create(current_screen, LV_SYMBOL_VOLUME_MAX, LV_ALIGN_TOP_RIGHT,
+		      volume_up_button_event_cb);
+	button_create(current_screen, LV_SYMBOL_VOLUME_MID, LV_ALIGN_BOTTOM_RIGHT,
+		      volume_down_button_event_cb);
+	button_create(current_screen, LV_SYMBOL_MUTE, LV_ALIGN_BOTTOM_LEFT, btn5_button_event_cb);
 	devicetype_label_create(current_screen);
 }

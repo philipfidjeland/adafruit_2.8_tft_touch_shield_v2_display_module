@@ -4,11 +4,14 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
 
-#include "display.h"
+#include <display/display.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/display.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/debug/stack.h>
+#include <errno.h>
+
 #include <lvgl.h>
 #include <stdio.h>
 #include <string.h>
@@ -28,6 +31,40 @@ k_tid_t display_thread;
 
 ZBUS_CHAN_DECLARE(button_chan);
 
+ZBUS_SUBSCRIBER_DEFINE(le_audio_evt_sub_display, CONFIG_LE_AUDIO_MSG_SUB_QUEUE_SIZE);
+
+void update_streaming_state(lv_obj_t *play_pause_button)
+{
+	int ret;
+
+	const struct zbus_channel *chan;
+	uint8_t event;
+
+	ret = zbus_sub_wait(&le_audio_evt_sub_display, &chan, K_NO_WAIT);
+	if (ret == 0) {
+
+		struct le_audio_msg msg;
+		ret = zbus_chan_read(chan, &msg, K_NO_WAIT);
+
+		event = msg.event;
+
+		switch (event) {
+		case LE_AUDIO_EVT_STREAMING:
+			lv_label_set_text(play_pause_button, LV_SYMBOL_PAUSE);
+			break;
+
+		case LE_AUDIO_EVT_NOT_STREAMING:
+			lv_label_set_text(play_pause_button, LV_SYMBOL_PLAY);
+			break;
+		default:
+			break;
+		}
+		if (ret == 35) {
+			ret = 0;
+		} else {
+		}
+	}
+}
 void create_timestamp_label(lv_obj_t *current_screen)
 {
 	static uint32_t count;
@@ -55,15 +92,19 @@ void update_thread(void *arg1, void *arg2, void *arg3)
 	int update_counter = 0;
 
 	while (1) {
-#if (CONFIG_AUDIO_DEV == 1)
 		update_counter++;
+		/* #if (CONFIG_AUDIO_DEV == 1)
+				if (update_counter >= 100) {
+					volume_level_int = hw_codec_volume_get();
+					sprintf(volume_level_str, "%d", volume_level_int);
+					lv_label_set_text(volume_level_label, volume_level_str);
+					update_counter = 0;
+				}
+		#endif */
 		if (update_counter >= 100) {
-			volume_level_int = hw_codec_volume_get();
-			sprintf(volume_level_str, "%d", volume_level_int);
-			lv_label_set_text(volume_level_label, volume_level_str);
+			update_streaming_state(volume_level_label);
 			update_counter = 0;
 		}
-#endif
 		lv_task_handler();
 		k_sleep(K_MSEC(16));
 	}
@@ -98,6 +139,5 @@ int display_init()
 	display_thread = k_thread_create(&display_data, display_thread_STACK,
 					 K_THREAD_STACK_SIZEOF(display_thread_STACK), update_thread,
 					 NULL, NULL, NULL, MY_PRIORITY, 0, K_NO_WAIT);
-
 	return 0;
 }
