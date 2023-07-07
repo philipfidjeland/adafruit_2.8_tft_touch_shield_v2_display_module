@@ -6,3 +6,4 @@
 
 void button_tab_create(lv_obj_t *current_screen);
 extern void update_volume_level(void *arg1, void *arg2, void *arg3);
+void update_button_tab();

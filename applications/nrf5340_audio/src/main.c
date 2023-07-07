@@ -25,7 +25,7 @@
 #include "audio_system.h"
 #include "channel_assignment.h"
 #include "streamctrl.h"
-#include "display.h"
+#include <display/display.h>
 
 #if defined(CONFIG_AUDIO_DFU_ENABLE)
 #include "dfu_entry.h"
@@ -47,6 +47,7 @@ ZBUS_CHAN_DECLARE(le_audio_chan);
 
 ZBUS_OBS_DECLARE(button_sub);
 ZBUS_OBS_DECLARE(le_audio_evt_sub);
+ZBUS_OBS_DECLARE(le_audio_evt_sub_display);
 
 static int hfclock_config_and_start(void)
 {
@@ -182,6 +183,9 @@ int main(void)
 		ERR_CHK(ret);
 
 		ret = zbus_chan_add_obs(&le_audio_chan, &le_audio_evt_sub, K_MSEC(200));
+		ERR_CHK(ret);
+
+		ret = zbus_chan_add_obs(&le_audio_chan, &le_audio_evt_sub_display, K_MSEC(200));
 		ERR_CHK(ret);
 	}
 
