@@ -5,13 +5,13 @@
 #
 
 rsource "Kconfig.defaults"
-
+rsource "display/Kconfig"
 menu "Modules"
 
 config BUTTON_DEBOUNCE_MS
 	int "Button debounce time in ms"
 	default 50
-
+	
 #----------------------------------------------------------------------------#
 menu "Power measurement"
 
@@ -82,6 +82,10 @@ source "subsys/logging/Kconfig.template.log_config"
 
 module = MODULE_SD_CARD
 module-str = module-sd-card
+source "subsys/logging/Kconfig.template.log_config"
+
+module=NRF5340_AUDIO_DK_DISPLAYDISPLAY
+module-str=nrf5340_audio_dk_display
 source "subsys/logging/Kconfig.template.log_config"
 
 endmenu # Log levels

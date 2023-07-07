@@ -10,8 +10,10 @@
 #include <errno.h>
 
 #include <zephyr/logging/log.h>
+#include <stdlib.h>
 LOG_MODULE_REGISTER(pscm, CONFIG_PSCM_LOG_LEVEL);
-
+static int32_t pcsm_avg_frame_val_left;
+static int32_t pcsm_avg_frame_val_right;
 /**
  * @brief      Determines whether the specified pcm bit depth is valid bit depth.
  *
@@ -54,6 +56,12 @@ int pscm_zero_pad(void const *const input, size_t input_size, enum audio_channel
 {
 	uint8_t bytes_per_sample = pcm_bit_depth / 8;
 
+	int32_t total_of_all_frames_left = 0;
+	int32_t total_of_all_frames_right = 0;
+
+	int16_t temp_frame_sum_left = 0;
+	int16_t temp_frame_sum_right = 0;
+
 	if (!is_valid_bit_depth(pcm_bit_depth) || !is_valid_size(input_size, bytes_per_sample, 1)) {
 		return -EINVAL;
 	}
@@ -64,6 +72,8 @@ int pscm_zero_pad(void const *const input, size_t input_size, enum audio_channel
 	for (uint32_t i = 0; i < input_size / bytes_per_sample; i++) {
 		if (channel == AUDIO_CH_L) {
 			for (uint8_t j = 0; j < bytes_per_sample; j++) {
+				temp_frame_sum_left += ((*pointer_input) << 8 * j);
+				temp_frame_sum_right += ((*pointer_input) << 8 * j);
 				*pointer_output++ = *pointer_input++;
 			}
 
@@ -76,12 +86,27 @@ int pscm_zero_pad(void const *const input, size_t input_size, enum audio_channel
 			}
 
 			for (uint8_t j = 0; j < bytes_per_sample; j++) {
+
 				*pointer_output++ = *pointer_input++;
 			}
 		} else {
 			LOG_ERR("Invalid channel selection");
 			return -EINVAL;
 		}
+		total_of_all_frames_left += abs(temp_frame_sum_left);
+		total_of_all_frames_right += abs(temp_frame_sum_right);
+
+		temp_frame_sum_left = 0;
+		temp_frame_sum_right = 0;
+	}
+	if (input_size / bytes_per_sample != 0) {
+
+		pcsm_avg_frame_val_left =
+			total_of_all_frames_left / (int)(input_size / bytes_per_sample);
+		pcsm_avg_frame_val_right =
+			total_of_all_frames_right / (int)(input_size / bytes_per_sample);
+	} else {
+		LOG_ERR("Division by zero occurred");
 	}
 
 	*output_size = input_size * 2;
@@ -93,6 +118,9 @@ int pscm_copy_pad(void const *const input, size_t input_size, uint8_t pcm_bit_de
 {
 	uint8_t bytes_per_sample = pcm_bit_depth / 8;
 
+	int32_t total_of_all_frames = 0;
+	int16_t temp_frame_sum = 0;
+
 	if (!is_valid_bit_depth(pcm_bit_depth) || !is_valid_size(input_size, bytes_per_sample, 1)) {
 		return -EINVAL;
 	}
@@ -102,6 +130,7 @@ int pscm_copy_pad(void const *const input, size_t input_size, uint8_t pcm_bit_de
 
 	for (uint32_t i = 0; i < input_size / bytes_per_sample; i++) {
 		for (uint8_t j = 0; j < bytes_per_sample; j++) {
+			temp_frame_sum += ((*pointer_input) << 8 * j);
 			*pointer_output++ = *pointer_input++;
 		}
 		/* Move back to start of sample to copy into next channel */
@@ -110,8 +139,18 @@ int pscm_copy_pad(void const *const input, size_t input_size, uint8_t pcm_bit_de
 		for (uint8_t j = 0; j < bytes_per_sample; j++) {
 			*pointer_output++ = *pointer_input++;
 		}
+		total_of_all_frames += abs(temp_frame_sum);
+		temp_frame_sum = 0;
 	}
+	if (input_size / bytes_per_sample != 0) {
 
+		pcsm_avg_frame_val_left =
+			total_of_all_frames / (int)(input_size / bytes_per_sample);
+		pcsm_avg_frame_val_right =
+			total_of_all_frames / (int)(input_size / bytes_per_sample);
+	} else {
+		LOG_ERR("Division by zero occurred");
+	}
 	*output_size = input_size * 2;
 	return 0;
 }
@@ -120,6 +159,9 @@ int pscm_combine(void const *const input_left, void const *const input_right, si
 		 uint8_t pcm_bit_depth, void *output, size_t *output_size)
 {
 	uint8_t bytes_per_sample = pcm_bit_depth / 8;
+
+	int32_t total_of_all_frames = 0;
+	int16_t temp_frame_sum = 0;
 
 	if (!is_valid_bit_depth(pcm_bit_depth) || !is_valid_size(input_size, bytes_per_sample, 1)) {
 		return -EINVAL;
@@ -131,22 +173,39 @@ int pscm_combine(void const *const input_left, void const *const input_right, si
 
 	for (uint32_t i = 0; i < input_size / bytes_per_sample; i++) {
 		for (uint8_t j = 0; j < bytes_per_sample; j++) {
+			temp_frame_sum += ((*pointer_input_left) << 8 * j);
 			*pointer_output++ = *pointer_input_left++;
 		}
 		for (uint8_t j = 0; j < bytes_per_sample; j++) {
 			*pointer_output++ = *pointer_input_right++;
 		}
+		total_of_all_frames += abs(temp_frame_sum);
+		temp_frame_sum = 0;
+	}
+	if (input_size / bytes_per_sample != 0) {
+
+		pcsm_avg_frame_val_left =
+			total_of_all_frames / (int)(input_size / bytes_per_sample);
+		pcsm_avg_frame_val_right =
+			total_of_all_frames / (int)(input_size / bytes_per_sample);
+	} else {
+		LOG_ERR("Division by zero occurred");
 	}
 
 	*output_size = input_size * 2;
 	return 0;
 }
 
-int pscm_one_channel_split(void const *const input, size_t input_size,
-			   enum audio_channel channel, uint8_t pcm_bit_depth, void *output,
-			   size_t *output_size)
+int pscm_one_channel_split(void const *const input, size_t input_size, enum audio_channel channel,
+			   uint8_t pcm_bit_depth, void *output, size_t *output_size)
 {
 	uint8_t bytes_per_sample = pcm_bit_depth / 8;
+
+	int32_t total_of_all_frames_left = 0;
+	int32_t total_of_all_frames_right = 0;
+
+	int16_t temp_frame_sum_left = 0;
+	int16_t temp_frame_sum_right = 0;
 
 	if (!is_valid_bit_depth(pcm_bit_depth) || !is_valid_size(input_size, bytes_per_sample, 2)) {
 		return -EINVAL;
@@ -158,6 +217,7 @@ int pscm_one_channel_split(void const *const input, size_t input_size,
 	for (uint32_t i = 0; i < input_size / bytes_per_sample; i += 2) {
 		if (channel == AUDIO_CH_L) {
 			for (uint8_t j = 0; j < bytes_per_sample; j++) {
+				temp_frame_sum_left += ((*pointer_input) << 8 * j);
 				*pointer_output++ = *pointer_input++;
 			}
 			pointer_input += bytes_per_sample;
@@ -166,12 +226,26 @@ int pscm_one_channel_split(void const *const input, size_t input_size,
 			pointer_input += bytes_per_sample;
 
 			for (uint8_t j = 0; j < bytes_per_sample; j++) {
+				temp_frame_sum_right += ((*pointer_input) << 8 * j);
 				*pointer_output++ = *pointer_input++;
 			}
 		} else {
 			LOG_ERR("Invalid channel selection");
 			return -EINVAL;
 		}
+		total_of_all_frames_left += abs(temp_frame_sum_left);
+		total_of_all_frames_right += abs(temp_frame_sum_right);
+		temp_frame_sum_left = 0;
+		temp_frame_sum_right = 0;
+	}
+	if (input_size / bytes_per_sample != 0) {
+
+		pcsm_avg_frame_val_left =
+			total_of_all_frames_left / (int)(input_size / bytes_per_sample);
+		pcsm_avg_frame_val_right =
+			total_of_all_frames_right / (int)(input_size / bytes_per_sample);
+	} else {
+		LOG_ERR("Division by zero occurred");
 	}
 
 	*output_size = input_size / 2;
@@ -183,6 +257,12 @@ int pscm_two_channel_split(void const *const input, size_t input_size, uint8_t p
 {
 	uint8_t bytes_per_sample = pcm_bit_depth / 8;
 
+	int32_t total_of_all_frames_left = 0;
+	int32_t total_of_all_frames_right = 0;
+
+	int16_t temp_frame_sum_left = 0;
+	int16_t temp_frame_sum_right = 0;
+
 	if (!is_valid_bit_depth(pcm_bit_depth) || !is_valid_size(input_size, bytes_per_sample, 2)) {
 		return -EINVAL;
 	}
@@ -193,13 +273,36 @@ int pscm_two_channel_split(void const *const input, size_t input_size, uint8_t p
 
 	for (uint32_t i = 0; i < input_size / bytes_per_sample; i += 2) {
 		for (uint8_t j = 0; j < bytes_per_sample; j++) {
+			temp_frame_sum_left += ((*pointer_input) << 8 * j);
 			*pointer_output_left++ = *pointer_input++;
 		}
 		for (uint8_t j = 0; j < bytes_per_sample; j++) {
+			temp_frame_sum_right += ((*pointer_input) << 8 * j);
 			*pointer_output_right++ = *pointer_input++;
 		}
+		total_of_all_frames_left += abs(temp_frame_sum_left);
+		total_of_all_frames_right += abs(temp_frame_sum_right);
+		temp_frame_sum_left = 0;
+		temp_frame_sum_right = 0;
 	}
+	if (input_size / bytes_per_sample != 0) {
 
+		pcsm_avg_frame_val_left =
+			total_of_all_frames_left / (int)(input_size / bytes_per_sample);
+		pcsm_avg_frame_val_right =
+			total_of_all_frames_right / (int)(input_size / bytes_per_sample);
+	} else {
+		LOG_ERR("Division by zero occurred");
+	}
 	*output_size = input_size / 2;
 	return 0;
+}
+
+int32_t pcsm_avg_frame_val_left_get(void)
+{
+	return pcsm_avg_frame_val_left;
+}
+int32_t pcsm_avg_frame_val_right_get(void)
+{
+	return pcsm_avg_frame_val_right;
 }

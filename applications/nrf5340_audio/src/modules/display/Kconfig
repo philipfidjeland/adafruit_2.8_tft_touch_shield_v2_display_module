@@ -1,0 +1,26 @@
+#
+# Copyright (c) 2023 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+rsource "Kconfig.defaults"
+
+menu "NRF5340_audio_DK_display"
+
+config NRF5340_AUDIO_DK_DISPLAY
+	bool "True if using display for nrf5340 audio DK"
+	default n
+
+config DISPLAY_LOG_TAB_LOG_LEVEL
+	int "Log level of messages display on log tab"
+	default 2
+
+config LOG_TIMESTAMP
+	bool "Display timestamp in us in front of log message"
+	default n
+
+config LOG_TAB_MAX_LEN
+	int "How many log messages to be stored on the log tab"
+	default 10
+
+endmenu # NRF5340_audio_DK_display

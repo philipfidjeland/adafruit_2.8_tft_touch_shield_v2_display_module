@@ -40,6 +40,7 @@ rsource "src/drivers/Kconfig"
 rsource "src/modules/Kconfig"
 rsource "src/utils/Kconfig"
 rsource "dfu/conf/Kconfig.dfu"
+rsource "src/modules/display/Kconfig"
 
 #----------------------------------------------------------------------------#
 menu "Logging"

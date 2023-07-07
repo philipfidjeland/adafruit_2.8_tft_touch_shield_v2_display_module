@@ -13,10 +13,18 @@ target_sources(app PRIVATE
 	       ${CMAKE_CURRENT_SOURCE_DIR}/led.c
 	       ${CMAKE_CURRENT_SOURCE_DIR}/power_meas.c
 	       ${CMAKE_CURRENT_SOURCE_DIR}/sd_card.c
-)
+	)
 
 if (CONFIG_AUDIO_DFU_ENABLE)
 	target_sources(app PRIVATE
 			    ${CMAKE_CURRENT_SOURCE_DIR}/dfu_entry.c
+	)
+endif()
+
+if (CONFIG_DISPLAY)
+	target_sources(app PRIVATE
+		${CMAKE_CURRENT_SOURCE_DIR}/display/nrf5340_audio_dk_display.c
+		${CMAKE_CURRENT_SOURCE_DIR}/display/tab_menu.c
+		${CMAKE_CURRENT_SOURCE_DIR}/display/tab_log.c
 	)
 endif()

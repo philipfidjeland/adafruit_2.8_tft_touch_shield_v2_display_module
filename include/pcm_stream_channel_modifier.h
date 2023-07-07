@@ -22,7 +22,6 @@
 #include <zephyr/kernel.h>
 #include <audio_defines.h>
 
-
 /** @brief  Adds a 0 after every sample from *input
  *	   and writes it to *output.
  * @note Use to create stereo stream from a mono source where one
@@ -84,9 +83,8 @@ int pscm_combine(void const *const input_left, void const *const input_right, si
  *
  * @return	0 if success.
  */
-int pscm_one_channel_split(void const *const input, size_t input_size,
-			   enum audio_channel channel, uint8_t pcm_bit_depth, void *output,
-			   size_t *output_size);
+int pscm_one_channel_split(void const *const input, size_t input_size, enum audio_channel channel,
+			   uint8_t pcm_bit_depth, void *output, size_t *output_size);
 
 /** @brief  Splits a stereo stream to two separate mono streams.
  * @note Use to split stereo audio stream to two separate channels.
@@ -111,4 +109,19 @@ int pscm_two_channel_split(void const *const input, size_t input_size, uint8_t p
  * @}
  */
 
+/**
+ * @brief Get average frame value for left channel
+ *
+ * @return Average frame value for left channel
+ */
+
+int32_t pcsm_avg_frame_val_left_get(void);
+
+/**
+ * @brief Get average frame value for right channel
+ *
+ * @return Average frame value for right channel
+ */
+
+int32_t pcsm_avg_frame_val_right_get(void);
 #endif /* _PCM_STREAM_CHANNEL_MODIFIER_H_ */
