@@ -83,6 +83,10 @@ source "subsys/logging/Kconfig.template.log_config"
 module = MODULE_SD_CARD
 module-str = module-sd-card
 source "subsys/logging/Kconfig.template.log_config"
+module=DISPLAY
+module-dep=LOG
+module-str=DISPLAY
+source "${ZEPHYR_BASE}/subsys/logging/Kconfig.template.log_config"
 
 endmenu # Log levels
 
